@@ -15,11 +15,54 @@ int initTasks() {
 	return 0;
 }
 
-int addTasks() {
+void addTasks() {
+	
+	initTasks();
+
+	// during testing ensure we have some tests tasks w/o having to enter them
 	tasks[0] = "test task 0\n";
 	tasks[1] = "test task 1\n";
-	tasks[2] = "test task 2\n";
-	tasks[3] = "test task 3\n";
+
+	char tempTask[81];
+	printf("Enter a tasks, 80 char max, ctrl-d to stop\n");
+	int i = 2;
+	while (fgets (tempTask, 81, stdin) != NULL) {
+		printf("Got %s", tempTask);
+		// all new tasks are getting saved as the last, it's acting like javascript, what gives?
+		// so i is incrementing, and tempTask is getting updated but it's running at the end
+		// when tempTask is the last input task instead of after each task.
+		// but the above printf is showing each new task
+		// it really does seem like some sort of optimization or closure issue
+		// is it because when i init the array i'm doing it to "" and it's just the same pointer all the way instead
+		// of separate pointers to the start of separate strings?
+		// i need to go study up on arrays, accessing them, and char arrays
+		tasks[i] = tempTask;
+		printf("stored %s", tasks[i]); // <- fine here
+		i++;
+	}
+	printf("test-task2: %s|", tasks[2]); // <- wrong here, it's def just using one shared location for every array entry
+	printf("test-task3: %s|", tasks[3]); // <- wrong here
+
+	// also need to clear the ctrl-d lest the next line read pick it up
+	// so many ways to do this, trying https://stackoverflow.com/a/45470329
+	// this did nothing
+	/*
+	char buf[5];
+	if (fgets(buf, sizeof buf, stdin) == NULL) {
+		// Handle EOF or Error
+		// do nothing?
+	}
+	*/
+
+	printf("done taking tasks, now printing all:\n");
+
+	for (int i = 0; i < 100; i++) {
+		if (strlen(tasks[i]) > 0) {
+			printf("task-%d: %s|",i, tasks[i]); // tasks have their own line break, right?
+		}
+
+	}
+
 }
 
 int countTasks() {
@@ -43,6 +86,7 @@ int askUserNextStep() {
 	char c;
 	int error = 1;
 	if (scanf("%1[^\n]%*c", name) == 1) {
+		printf("got: %s\n",name);
 		c = name[0];
 		switch (c) {
 			case 'c':
@@ -62,12 +106,12 @@ int askUserNextStep() {
 				error = 0;
 				break;
 			default:
-				printf("Input C, S, D, or E please.\n");
+				printf("No match, needed C, S, D, or E. Got: %s\n",name);
 				error = 1;
 				break;
 		}
 	} else {
-		printf("Input C, S, D, or E please.\n");
+		printf("No match, needed C, S, D, or E. Got: %s\n",name);
 		error = 1;
 	}
 	return error;
@@ -75,7 +119,6 @@ int askUserNextStep() {
 
 int main() {
 	srand(time(0));
-	initTasks(); // inits golbal tasks
 	addTasks(); // operates on global tasks
 	int length = countTasks();
 	printf("Max tasks: %d \n current tasks: %d\n", MAXTASKS, length);
