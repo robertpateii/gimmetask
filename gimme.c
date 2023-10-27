@@ -21,8 +21,8 @@ enum action {
 void addTasks() {
 	
 	// during testing ensure we have some tests tasks w/o having to enter them
-	strcpy(tasks[0], "test task #1\n");
-	strcpy(tasks[1], "test task #2\n");
+	strcpy(tasks[0], "Email replies\n");
+	strcpy(tasks[1], "Short study/research\n");
 
 	char tempTask[81];
 	printf("Enter tasks, 80 char max, type done to stop\n");
