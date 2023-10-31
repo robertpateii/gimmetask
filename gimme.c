@@ -6,7 +6,10 @@
 // https://www.cs.yale.edu/homes/aspnes/pinewiki/C(2f)Randomization.html
 
 #define MAXTASKS 100
-#define MAXTASKLEN 81
+// 80 characters, 2 completed/deleted marker and trailing space,  1 for end of line
+#define MAXTASKLEN 83
+char deleted = '-';
+char completed = 'x';
 
 char tasks[MAXTASKS][MAXTASKLEN];
 
@@ -17,6 +20,14 @@ enum action {
 	Delete,
 	Add
 };
+
+void printAllTasks() {
+	for (int i = 0; i < 100; i++) {
+		if (strlen(tasks[i]) > 0) {
+			printf("task #%d: %s",i+1, tasks[i]); // tasks have their own linebreak
+		}
+	}
+}
 
 void addTasks() {
 	
@@ -39,27 +50,21 @@ void addTasks() {
 	}
 
 	printf("done taking tasks, now printing all:\n");
-
-	for (int i = 0; i < 100; i++) {
-		if (strlen(tasks[i]) > 0) {
-			printf("task #%d: %s",i+1, tasks[i]); // tasks have their own linebreak
-		}
-
-	}
-
+	printAllTasks();
 }
 
 void addMore() {
-	// find first empty string in array (if none, bail)
-	// get new task
-	// add to the empty slot
-	// send back to nextAction()?
-	// could allow for adding many at once here, but would that be needed much? would need to say done everytime you add one or something instead of just a blah blah enter
+
+	// if we never remove tasks with delete/complete, we can use taskCount+1 as the new task position
+	// do we want to let the user add multiple at once? or just send them back to the menu?
+	printf("Not ready yet, so have a list of all the tasks:\n");
+	printAllTasks();
 }
 
 int countTasks() {
 	int count = 0;
 	for (int i = 0; i < 100; i++) {
+		// use strlen not sizeof because size is fixed not dynamic
 		if (strlen(tasks[i]) > 0) {
 			count++;
 		}
@@ -69,6 +74,19 @@ int countTasks() {
 
 int getTask(int taskCount) {
 	int randTask = rand() % taskCount;
+	int attempts = 0;
+	while(tasks[randTask][0] == deleted || tasks[randTask][0] == completed) {
+		// got deleted or completed task, so find a new one
+		randTask = rand() % taskCount;
+		attempts++;
+		if (attempts > 10) {
+			printf("Too many deleted/completed tasks, found 10 in a row\n");
+			printf("Warning: leaving the current task as -1 position, you should exit.\n");
+			return -1;
+		}
+	}
+	printf("Do #%d next:\n", randTask+1);
+	printf("%s",tasks[randTask]);
 	return randTask;
 }
 
@@ -95,38 +113,70 @@ enum action getNextAction() {
 	}
 }
 
+void prependTaskPrep(int pos) {
+	char *temp = strdup(tasks[pos]);
+	for (int i = MAXTASKLEN; i > 1; i--) {
+		// we should have 2 characters free at the end
+		// so copy everything higher by 2
+		// then we'll put "- " at the front
+		// 83 = 81
+		// 82 = 80
+		// ...
+		// 2 = 0
+		// stop
+		temp[i] = tasks[pos][i-2];
+	}
+	strcpy(tasks[pos], temp);
+	free(temp);
+}
+
+void delete(int pos) {
+	if (pos == -1) {
+		printf("Error: -1 current task, you should exit.\n");
+		return;
+	}
+	prependTaskPrep(pos);
+	tasks[pos][0] = deleted;
+	tasks[pos][1] = ' ';
+}
+
+void complete(int pos) {
+	if (pos == -1) {
+		printf("Error: -1 current task, you should exit.\n");
+		return;
+	}
+	prependTaskPrep(pos);
+	tasks[pos][0] = completed;
+	tasks[pos][1] = ' ';
+}
+
 int main() {
 	srand(time(0));
 	addTasks(); // operates on global tasks
 	int length = countTasks();
 	printf("Max tasks: %d; Current tasks: %d\n", MAXTASKS, length);
-	int currTaskPos = getTask(length);
-	printf("Do #%d next:\n", currTaskPos+1);
-	printf(tasks[currTaskPos]);
+	int currTaskPos = getTask(length); // also prints the task
 	enum action nextAction;
 	while (nextAction = getNextAction()) { // 0 is exit
 		switch (nextAction) {
 		case 1:
 			printf("Got Complete\n");
-			// no real different than delete as long as everything is in ram
-			// exclude task from being randomly selected, or shown in lists if that is added
-			// so strpy a blank string on it?
+			complete(currTaskPos);
+			printf("Completed, getting new one:\n");
+			currTaskPos = getTask(length);
 			break;
 		case 2:
 			printf("Got Skip\n");
-			// should prob be its own function since doing it at least twice 
-			// also it gets a random number within the task count
-			// but then uses it as the position. If I start adding/removing it
-			// will get way off.
 			currTaskPos = getTask(length);
-			printf("Do #%d next:\n", currTaskPos+1);
-			printf(tasks[currTaskPos]);
 			break;
 		case 3:
-			printf("Got Delete\n");
+			printf("Got Delete for task #%d\n", currTaskPos);
 			// no real different than complete  as long as everything is in ram
 			// exclude task from being randomly selected, or shown in lists if that is added
 			// so strpy a blank string on it?
+			delete(currTaskPos);
+			printf("Deleted, getting new one:\n");
+			currTaskPos = getTask(length);
 			break;
 		case 4:
 			printf("Got Add\n");
