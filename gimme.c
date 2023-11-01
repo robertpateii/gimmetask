@@ -19,11 +19,12 @@ enum action {
 	Skip,
 	Delete,
 	Add,
-	List
+	List,
+	Retry
 };
 
 void printAllTasks() {
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < MAXTASKS; i++) {
 		if (strlen(tasks[i]) > 0) {
 			printf("#%d: %s",i+1, tasks[i]); // tasks have their own linebreak
 		}
@@ -33,11 +34,11 @@ void printAllTasks() {
 void addTasks(int startPos) {
 	
 
-	char tempTask[81];
+	char tempTask[MAXTASKLEN-2];
 	printf("Enter tasks, 80 char max, type done to stop\n");
 	int i = startPos;
 	char* doneStr = "done\n";
-	while (fgets (tempTask, 81, stdin) != NULL) {
+	while (fgets (tempTask, MAXTASKLEN-2, stdin) != NULL) {
 		if (strcmp(tempTask, doneStr)) { // 0 is match
 			printf("Got: %s", tempTask);
 			strcpy(tasks[i], tempTask);
@@ -53,7 +54,7 @@ void addTasks(int startPos) {
 
 int countTasks() {
 	int count = 0;
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < MAXTASKS; i++) {
 		// use strlen not sizeof because size is fixed not dynamic
 		if (strlen(tasks[i]) > 0) {
 			count++;
@@ -94,30 +95,20 @@ enum action getNextAction() {
 		if (*x == 'n') return Skip; // easter egg for vim users
 		if (*x == 'e') return Exit;
 		// default
-		printf("no match, exiting, got:\n");
-		printf("|%s|\n",x);
-		return Exit;
+		printf("Invalid input, try again.\n");
+		return Retry;
 	} else {
-		printf("got null/eof, exiting.\n");
+		printf("Unexpecetd null/eof, exiting.\n");
 		return Exit;
 	}
 }
 
 void prependTaskPrep(int pos) {
-	char *temp = strdup(tasks[pos]);
-	for (int i = MAXTASKLEN; i > 1; i--) {
-		// we should have 2 characters free at the end
-		// so copy everything higher by 2
-		// then we'll put "- " at the front
-		// 83 = 81
-		// 82 = 80
-		// ...
-		// 2 = 0
-		// stop
-		temp[i] = tasks[pos][i-2];
-	}
-	strcpy(tasks[pos], temp);
-	free(temp);
+	char temp[MAXTASKLEN];
+	char temp2[MAXTASKLEN] = "  ";
+	strcpy(temp, tasks[pos]);
+	strcat(temp2, temp);
+	strcpy(tasks[pos], temp2);;
 }
 
 void delete(int pos) {
@@ -142,12 +133,7 @@ void complete(int pos) {
 
 int main() {
 	srand(time(0));// for getTask which should be randomish
-
-	// during testing ensure we have some tests tasks w/o having to enter them
-	strcpy(tasks[0], "Email replies\n");
-	strcpy(tasks[1], "Short study/research\n");
-
-	addTasks(2); // 2 is start position because of the above testing tasks
+	addTasks(0);
 	int length = countTasks();
 	printf("Max tasks: %d; Total tasks: %d\n", MAXTASKS, countTasks());
 	printf("Next is ");
@@ -179,8 +165,11 @@ int main() {
 			printAllTasks();
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			break;
+		case 6:
+			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+			break;
 		default:
-			printf("Got unexpected\n");
+			printf("Got unexpected action!\n");
 			break;
 		}
 	}
