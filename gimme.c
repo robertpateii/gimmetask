@@ -14,13 +14,15 @@ char completed = 'x';
 char tasks[MAXTASKS][MAXTASKLEN];
 
 enum action {
+	// do not re-order unless you change the switch in main
 	Exit = 0,
 	Complete,
 	Skip,
 	Delete,
 	Add,
 	List,
-	Retry
+	Retry,
+	Get
 };
 
 void printAllTasks() {
@@ -79,12 +81,33 @@ int getTask(int taskCount) {
 	return randTask;
 }
 
+int getSpecificTask() {
+	char x[10];
+	char* end;
+	printf("What task number do you want?\n");
+	if (fgets (x, 10, stdin) != NULL) {
+		int t;
+		t = strtol(x, &end, 10);
+		if (0 < t < MAXTASKS+1) {
+			printf("#%d: %s", t, tasks[t-1]);
+			return t-1;
+		} else {
+			printf("Task num out of bounds, doing nothing\n");
+		}
+	} else {
+		printf("Unexpecetd null/eof, doing nothing.\n");
+	}
+	// fail state
+	return -1;
+
+}
+
 enum action getNextAction() {
 	// I probably will have leftover EOF in stdin from inputting tasks
 	// https://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
 	// https://stackoverflow.com/questions/30304368/end-while-loop-with-ctrld-scanf
 	char x[10];
-	printf("Complete, Skip, Delete, Add, List, or Exit?\n");
+	printf("Complete, Skip, Delete, Add, List, Get, or Exit?\n");
 	if (fgets (x, 10, stdin) != NULL) {
 		*x = tolower(*x);	
 		if (*x == 'c') return Complete;
@@ -93,6 +116,7 @@ enum action getNextAction() {
 		if (*x == 'a') return Add;
 		if (*x == 'l') return List;
 		if (*x == 'n') return Skip; // easter egg for vim users
+		if (*x == 'g') return Get;
 		if (*x == 'e') return Exit;
 		// default
 		printf("Invalid input, try again.\n");
@@ -167,6 +191,9 @@ int main() {
 			break;
 		case 6:
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+			break;
+		case 7:
+			currTaskPos = getSpecificTask();
 			break;
 		default:
 			printf("Got unexpected action!\n");
