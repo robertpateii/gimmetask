@@ -15,10 +15,10 @@ char tasks[MAXTASKS][MAXTASKLEN];
 
 enum action {
 	// do not re-order unless you change the switch in main
-	Exit = 0,
-	Complete,
-	Skip,
-	Delete,
+	Quit = 0,
+	Done,
+	Next,
+	Remove,
 	Add,
 	List,
 	Retry,
@@ -117,24 +117,23 @@ enum action getNextAction() {
 	// https://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
 	// https://stackoverflow.com/questions/30304368/end-while-loop-with-ctrld-scanf
 	char x[10];
-	printf("Complete, Skip, Delete, Add, List, Get, or Exit?\n");
+	printf("Done, Next, Remove, Add, List, Get, Export or Quit?\n");
 	if (fgets (x, 10, stdin) != NULL) {
 		*x = tolower(*x);	
-		if (*x == 'c') return Complete; // how about done?
-		if (*x == 's') return Skip; // how about next?
-		if (*x == 'd') return Delete; // how about remove?
+		if (*x == 'd') return Done;
+		if (*x == 'n') return Next;
+		if (*x == 'r') return Remove;
 		if (*x == 'a') return Add;
 		if (*x == 'l') return List;
-		if (*x == 'n') return Skip; // easter egg for vim users
 		if (*x == 'g') return Get;
-		if (*x == 'e') return Exit;// how about quit?
-		if (*x == 'x') return Export;// how about export?
+		if (*x == 'q') return Quit;
+		if (*x == 'e') return Export;
 		// default
 		printf("Invalid input, try again.\n");
 		return Retry;
 	} else {
 		printf("Unexpecetd null/eof, exiting.\n");
-		return Exit;
+		return Quit;
 	}
 }
 
