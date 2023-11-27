@@ -22,13 +22,23 @@ enum action {
 	Add,
 	List,
 	Retry,
-	Get
+	Get,
+	Export
 };
 
 void printAllTasks() {
 	for (int i = 0; i < MAXTASKS; i++) {
 		if (strlen(tasks[i]) > 0) {
 			printf("#%d: %s",i+1, tasks[i]); // tasks have their own linebreak
+		}
+	}
+}
+
+
+void exportTasks() {
+	for (int i = 0; i < MAXTASKS; i++) {
+		if (strlen(tasks[i]) > 0 && tasks[i][0] != deleted && tasks[i][0] != completed ) {
+			printf("%s", tasks[i]); // tasks have their own linebreak
 		}
 	}
 }
@@ -110,14 +120,15 @@ enum action getNextAction() {
 	printf("Complete, Skip, Delete, Add, List, Get, or Exit?\n");
 	if (fgets (x, 10, stdin) != NULL) {
 		*x = tolower(*x);	
-		if (*x == 'c') return Complete;
-		if (*x == 's') return Skip;
-		if (*x == 'd') return Delete;
+		if (*x == 'c') return Complete; // how about done?
+		if (*x == 's') return Skip; // how about next?
+		if (*x == 'd') return Delete; // how about remove?
 		if (*x == 'a') return Add;
 		if (*x == 'l') return List;
 		if (*x == 'n') return Skip; // easter egg for vim users
 		if (*x == 'g') return Get;
-		if (*x == 'e') return Exit;
+		if (*x == 'e') return Exit;// how about quit?
+		if (*x == 'x') return Export;// how about export?
 		// default
 		printf("Invalid input, try again.\n");
 		return Retry;
@@ -194,6 +205,10 @@ int main() {
 			break;
 		case 7:
 			currTaskPos = getSpecificTask();
+			break;
+		case 8:
+			exportTasks();
+			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			break;
 		default:
 			printf("Got unexpected action!\n");
