@@ -23,7 +23,7 @@ enum action {
 	List,
 	Retry,
 	Get,
-	Export
+	Backup
 };
 
 void printAllTasks() {
@@ -36,11 +36,21 @@ void printAllTasks() {
 
 
 void exportTasks() {
+	FILE *filePtr;
+	filePtr = fopen("task-backup.txt","w");
+
+	if (filePtr == NULL) {
+		printf("Could not open backup file for writing.");
+		return;
+	}
+
 	for (int i = 0; i < MAXTASKS; i++) {
 		if (strlen(tasks[i]) > 0 && tasks[i][0] != deleted && tasks[i][0] != completed ) {
-			printf("%s", tasks[i]); // tasks have their own linebreak
+			fprintf(filePtr, "%s", tasks[i]); // tasks have their own linebreak
 		}
 	}
+
+	fclose(filePtr);
 }
 
 void addTasks(int startPos) {
@@ -115,7 +125,7 @@ int getSpecificTask() {
 enum action getNextAction() {
 	// thanks https://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
 	char x[10];
-	printf("(D)one, (N)ext, (R)emove, (A)dd, (L)ist, (G)et, (E)xport, or (Q)uit?\n");
+	printf("(D)one, (N)ext, (R)emove, (A)dd, (L)ist, (G)et, (B)ackup, or (Q)uit?\n");
 	if (fgets (x, 10, stdin) != NULL) {
 		*x = tolower(*x);	
 		if (*x == 'd') return Done;
@@ -125,7 +135,7 @@ enum action getNextAction() {
 		if (*x == 'l') return List;
 		if (*x == 'g') return Get;
 		if (*x == 'q') return Quit;
-		if (*x == 'e') return Export;
+		if (*x == 'b') return Backup;
 		// default
         printf("Invalid input. Commands are: \n(D)one with current, (N)ext task, (R)emove current, (A)dd more,\n(L)ist all tasks, (G)et one, (E)xport open tasks or (Q)uit?\n");
 		return Retry;
@@ -174,36 +184,40 @@ int main() {
 	while (nextAction = getNextAction()) { // 0 is exit
 		length = countTasks();
 		switch (nextAction) {
-		case 1:
+		case 1: // done
 			printf("Done w/ #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			complete(currTaskPos);
 			printf("Next is ");
 			currTaskPos = getTask(length);
+			exportTasks();
 			break;
-		case 2:
+		case 2: // next
 			currTaskPos = getTask(length);
 			break;
-		case 3:
+		case 3: // remove
 			printf("Deleted #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			delete(currTaskPos);
 			printf("Next is ");
 			currTaskPos = getTask(length);
+			exportTasks();
 			break;
-		case 4:
+		case 4: // add
 			addTasks(countTasks());
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+			exportTasks();
 			break;
-		case 5:
+		case 5: // list
 			printAllTasks();
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			break;
-		case 6:
+		case 6: // retry
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			break;
-		case 7:
+		case 7: // get
 			currTaskPos = getSpecificTask();
 			break;
-		case 8:
+		case 8: // export / backup
+			printf("Backing up remaining tasks to task-backup.txt, also done as part of add/rem/done");
 			exportTasks();
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			break;
