@@ -10,7 +10,7 @@
 #define MAXTASKLEN 83
 char deleted = '-';
 char completed = 'x';
-
+int lastRandTask = -1;
 char tasks[MAXTASKS][MAXTASKLEN];
 
 enum action {
@@ -78,16 +78,16 @@ int countTasks() {
 int getTask(int taskCount) {
 	int randTask = rand() % taskCount;
 	int attempts = 0;
-	while(tasks[randTask][0] == deleted || tasks[randTask][0] == completed) {
-		// got deleted or completed task, so find a new one
+	while(lastRandTask == randTask || tasks[randTask][0] == deleted || tasks[randTask][0] == completed) {
 		randTask = rand() % taskCount;
 		attempts++;
 		if (attempts > 20) {
-			printf("Error: Found 20 deleted/completed tasks in a row. Are any valid?\n");
+			printf("Error: Found 20 removed/done/current tasks in a row. Are any valid?\n");
 			return -1;
 		}
 	}
 	printf("#%d: %s", randTask+1, tasks[randTask]);
+	lastRandTask = randTask;
 	return randTask;
 }
 
@@ -113,11 +113,9 @@ int getSpecificTask() {
 }
 
 enum action getNextAction() {
-	// I probably will have leftover EOF in stdin from inputting tasks
-	// https://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
-	// https://stackoverflow.com/questions/30304368/end-while-loop-with-ctrld-scanf
+	// thanks https://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
 	char x[10];
-	printf("Done, Next, Remove, Add, List, Get, Export or Quit?\n");
+	printf("(D)one, (N)ext, (R)emove, (A)dd, (L)ist, (G)et, (E)xport, or (Q)uit?\n");
 	if (fgets (x, 10, stdin) != NULL) {
 		*x = tolower(*x);	
 		if (*x == 'd') return Done;
@@ -129,7 +127,7 @@ enum action getNextAction() {
 		if (*x == 'q') return Quit;
 		if (*x == 'e') return Export;
 		// default
-		printf("Invalid input, try again.\n");
+        printf("Invalid input. Commands are: \n(D)one with current, (N)ext task, (R)emove current, (A)dd more,\n(L)ist all tasks, (G)et one, (E)xport open tasks or (Q)uit?\n");
 		return Retry;
 	} else {
 		printf("Unexpecetd null/eof, exiting.\n");
