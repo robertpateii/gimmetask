@@ -6,12 +6,15 @@
 // https://www.cs.yale.edu/homes/aspnes/pinewiki/C(2f)Randomization.html
 
 #define MAXTASKS 100
-// 80 characters, 2 completed/deleted marker and trailing space,  1 for end of line
+// 80 characters, 2 completed/deleted marker and trailing space, 1 for end of line
 #define MAXTASKLEN 83
 char deleted = '-';
 char completed = 'x';
 int lastRandTask = -1;
-char tasks[MAXTASKS][MAXTASKLEN];
+char tasksOne[MAXTASKS][MAXTASKLEN];
+char tasksTwo[MAXTASKS][MAXTASKLEN];
+char (*tasks)[MAXTASKLEN] = tasksOne;
+char (*tasksTemp)[MAXTASKLEN] = tasksTwo;
 
 enum action {
 	// do not re-order unless you change the switch in main
@@ -23,7 +26,7 @@ enum action {
 	List,
 	Retry,
 	Get,
-	Backup
+	Clear
 };
 
 void printAllTasks() {
@@ -40,17 +43,76 @@ void exportTasks() {
 	filePtr = fopen("task-backup.txt","w");
 
 	if (filePtr == NULL) {
-		printf("Could not open backup file for writing.");
+		printf("Could not open task-backup file for writing.");
 		return;
 	}
 
 	for (int i = 0; i < MAXTASKS; i++) {
-		if (strlen(tasks[i]) > 0 && tasks[i][0] != deleted && tasks[i][0] != completed ) {
-			fprintf(filePtr, "%s", tasks[i]); // tasks have their own linebreak
+		if (strlen(tasks[i]) > 0 ) {
+			fprintf(filePtr, "%s", tasks[i]);
 		}
 	}
 
 	fclose(filePtr);
+}
+
+// Save all the done/removed tasks to a file
+// Remove them from the list
+// Move the newest tasks into the oldest now empty slots
+// ^^admittedly this approach is a little weird. Newer tasks will appear higher on the list after a clear, but at least older tasks retain their number and position instead of everything getting moved up.
+void clearTasks() {
+	FILE *fileDonePtr;
+	fileDonePtr = fopen("task-done.txt","a");
+
+	if (fileDonePtr == NULL) {
+		printf("Could not open task-done file for writing.");
+		return;
+	}
+
+	for (int i = 0; i < MAXTASKS; i++) {
+		if (strlen(tasks[i]) > 0 && (tasks[i][0] == deleted || tasks[i][0] == completed) ) {
+			fprintf(fileDonePtr, "%s", tasks[i]);
+		}
+	}
+
+	fclose(fileDonePtr);
+
+	// Tasks are added based on length, length is based on count of non-empty tasks.
+	// So removed/completed tasks need to be replaced with open tasks so all tasks are one contiguous block
+	// So for each deleted/completed, find the lowest incomplete and replace the deleted/completed
+	// Which sounds dangerous, modifying an array while doing a nested loop through it
+	// What if there are no incompletes below it? Set it to ""
+	for (int i = 0; i < MAXTASKS; i++) {
+		if (strlen(tasks[i]) > 0 && (tasks[i][0] == deleted || tasks[i][0] == completed) ) {
+			for (int j = MAXTASKS; j > 0; j--) {
+				if (strlen(tasks[j]) > 0 && tasks[j][0] != deleted && tasks[j][0] != completed) {
+					// if the incomplete is below the completed, move the incomplete into the completed's slot
+					if (j > i) {
+						strcpy(tasksTemp[i], tasks[j]);
+						strcpy(tasks[j], ""); // clear the moved task lets it get duped into the new list
+						break; // stop moivg backwards to find an incomplete, return to the outer loop trying to find done stuff and remove it
+					} else {
+						// otherwise the incomplete is on the bottom, so clear it instead of the moved task
+						strcpy(tasks[i], "");
+						break;
+					}
+				}
+			}
+		} else {
+			// it's either empty slot or an open task, so copy over the opens
+			if (strlen(tasks[i]) > 0) {
+				strcpy(tasksTemp[i], tasks[i]);
+			}
+		}
+	}
+	// now tasks (which is pointing to tasksOne) points to 100 empty strings
+	// and tasksTemp (which is pointing to tasksTwo) points to the data we need
+	// we need to swap these.
+	char (*tasksTemp2)[MAXTASKLEN];
+	tasksTemp2 = tasks; // save the empty string array's location to a temp pointer
+	tasks = tasksTemp; // point the live pointer to where tempPointer is pointing, which has the data we need and whould be tasksTwo on the first run but will alternate
+	tasksTemp = tasksTemp2; // point the temp pointer to where the empty string array is for the next run
+
 }
 
 void addTasks(int startPos) {
@@ -62,6 +124,7 @@ void addTasks(int startPos) {
 	char* doneStr = "done\n";
 	while (fgets (tempTask, MAXTASKLEN-2, stdin) != NULL) {
 		if (strcmp(tempTask, doneStr)) { // 0 is match
+			// TODO: may want to handle empty line being input and ignore it, I've done it on accident repeatedly
 			printf("Got: %s", tempTask);
 			strcpy(tasks[i], tempTask);
 			i++;
@@ -125,7 +188,7 @@ int getSpecificTask() {
 enum action getNextAction() {
 	// thanks https://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
 	char x[10];
-	printf("(D)one, (N)ext, (R)emove, (A)dd, (L)ist, (G)et, (B)ackup, or (Q)uit?\n");
+	printf("(D)one, (N)ext, (R)emove, (A)dd, (L)ist, (G)et, (C)lear, or (Q)uit?\n");
 	if (fgets (x, 10, stdin) != NULL) {
 		*x = tolower(*x);	
 		if (*x == 'd') return Done;
@@ -135,9 +198,9 @@ enum action getNextAction() {
 		if (*x == 'l') return List;
 		if (*x == 'g') return Get;
 		if (*x == 'q') return Quit;
-		if (*x == 'b') return Backup;
+		if (*x == 'c') return Clear;
 		// default
-        printf("Invalid input. Commands are: \n(D)one with current, (N)ext task, (R)emove current, (A)dd more,\n(L)ist all tasks, (G)et one, (E)xport open tasks or (Q)uit?\n");
+		printf("Invalid input. Commands are: \n(D)one with current, (N)ext task, (R)emove current, (A)dd more,\n(L)ist all tasks, (G)et one, (E)xport open tasks or (Q)uit?\n");
 		return Retry;
 	} else {
 		printf("Unexpecetd null/eof, exiting.\n");
@@ -180,6 +243,7 @@ int main() {
 	printf("Max tasks: %d; Total tasks: %d\n", MAXTASKS, countTasks());
 	printf("Next is ");
 	int currTaskPos = getTask(length); // also prints the task
+	// TODO: ask if they want to backup now?
 	enum action nextAction;
 	while (nextAction = getNextAction()) { // 0 is exit
 		length = countTasks();
@@ -216,9 +280,10 @@ int main() {
 		case 7: // get
 			currTaskPos = getSpecificTask();
 			break;
-		case 8: // export / backup
-			printf("Backing up remaining tasks to task-backup.txt, also done as part of add/rem/done");
+		case 8: // export / backup / clear
+			printf("Refreshing backup, clearing done/removed, then selecting a new task.\n");
 			exportTasks();
+			clearTasks();
 			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
 			break;
 		default:
@@ -226,5 +291,6 @@ int main() {
 			break;
 		}
 	}
+	// TODO: ask if they want to export/backup/clear before exit, or just do it
 	return 0;
 }

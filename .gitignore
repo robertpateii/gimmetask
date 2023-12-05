@@ -54,6 +54,7 @@ dkms.conf
 # compiled program
 gimme
 task-backup.txt
+task-done.txt
 
 # vim
 *.swp
