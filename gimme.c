@@ -200,7 +200,7 @@ enum action getNextAction() {
 		if (*x == 'q') return Quit;
 		if (*x == 'c') return Clear;
 		// default
-		printf("Invalid input. Commands are: \n(D)one with current, (N)ext task, (R)emove current, (A)dd more,\n(L)ist all tasks, (G)et one, (E)xport open tasks or (Q)uit?\n");
+		printf("Invalid input. Commands are: \n(D)one with current, (N)ext task, (R)emove current, (A)dd more,\n(L)ist all tasks, (G)et one, (C)lean & backup, or (Q)uit?\n");
 		return Retry;
 	} else {
 		printf("Unexpecetd null/eof, exiting.\n");
@@ -243,7 +243,9 @@ int main() {
 	printf("Max tasks: %d; Total tasks: %d\n", MAXTASKS, countTasks());
 	printf("Next is ");
 	int currTaskPos = getTask(length); // also prints the task
-	// TODO: ask if they want to backup now?
+	// Note there's no auto-backup after initial add, which is good because i have
+	// screwed up adding it a few times and wouldn't want to blow out my backup.
+	// TODO: ideally though you can choose between starting fresh or restoring.
 	enum action nextAction;
 	while (nextAction = getNextAction()) { // 0 is exit
 		length = countTasks();
@@ -280,17 +282,18 @@ int main() {
 		case 7: // get
 			currTaskPos = getSpecificTask();
 			break;
-		case 8: // export / backup / clear
-			printf("Refreshing backup, clearing done/removed, then selecting a new task.\n");
-			exportTasks();
+		case 8: // export / backup / clear / clean
+			printf("Cleaned out done/removed and replaced backup. New task:\n");
 			clearTasks();
-			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+			exportTasks();
+			printf("Cleaned out done/removed and replaced backup. New task:\n");
+			currTaskPos = getTask(length);
 			break;
 		default:
 			printf("Got unexpected action!\n");
 			break;
 		}
 	}
-	// TODO: ask if they want to export/backup/clear before exit, or just do it
+	// No need to export here since it happens after each change
 	return 0;
 }
