@@ -137,6 +137,31 @@ void addTasks(int startPos) {
 	printAllTasks();
 }
 
+// 1 means no backup file found, 0 means import success
+int importTasks() {
+	// Assumes only run at start when task list is empty
+	FILE *importFilePtr;
+	importFilePtr = fopen("task-backup.txt", "r");
+
+	if (importFilePtr == NULL) {
+		printf("No backup file.\n");
+		return 1;
+	}
+
+	char tempTask[MAXTASKLEN-2];
+	int i = 0;
+	while (fgets (tempTask, MAXTASKLEN-2, importFilePtr) != NULL && i < MAXTASKS) {
+			strcpy(tasks[i], tempTask);
+			i++;
+	}
+
+	fclose(importFilePtr);
+
+	printf("** New list **\n");
+	printAllTasks();
+	return 0;
+}
+
 int countTasks() {
 	int count = 0;
 	for (int i = 0; i < MAXTASKS; i++) {
@@ -238,14 +263,16 @@ void complete(int pos) {
 
 int main() {
 	srand(time(0));// for getTask which should be randomish
-	addTasks(0);
+	if (importTasks()) {
+		addTasks(0);
+        // TODO: ran into issue if this happens and the user kills the program here or enters no tasks, the exe stayed open unaccessible.
+	} else {
+		// do nothing, import success, if the user doesn't want to import, delete the backup file
+	}
 	int length = countTasks();
 	printf("Max tasks: %d; Total tasks: %d\n", MAXTASKS, countTasks());
 	printf("Next is ");
 	int currTaskPos = getTask(length); // also prints the task
-	// Note there's no auto-backup after initial add, which is good because i have
-	// screwed up adding it a few times and wouldn't want to blow out my backup.
-	// TODO: ideally though you can choose between starting fresh or restoring.
 	enum action nextAction;
 	while (nextAction = getNextAction()) { // 0 is exit
 		length = countTasks();
@@ -283,10 +310,10 @@ int main() {
 			currTaskPos = getSpecificTask();
 			break;
 		case 8: // export / backup / clear / clean
-			printf("Cleaned out done/removed and replaced backup. New task:\n");
 			clearTasks();
 			exportTasks();
 			printf("Cleaned out done/removed and replaced backup. New task:\n");
+			length = countTasks();
 			currTaskPos = getTask(length);
 			break;
 		default:
