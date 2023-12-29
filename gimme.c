@@ -133,8 +133,7 @@ void addTasks(int startPos) {
 		}
 	}
 
-	printf("** New list **\n");
-	printAllTasks();
+	printf("** Added the new ones. **\n");
 }
 
 // 1 means no backup file found, 0 means import success
@@ -157,8 +156,7 @@ int importTasks() {
 
 	fclose(importFilePtr);
 
-	printf("** New list **\n");
-	printAllTasks();
+	printf("** Import Successful **\n");
 	return 0;
 }
 
