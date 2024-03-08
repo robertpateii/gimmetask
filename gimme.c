@@ -40,7 +40,7 @@ void printAllTasks() {
 
 void exportTasks() {
 	FILE *filePtr;
-	filePtr = fopen("task-backup.txt","w");
+	filePtr = fopen("./task-backup.txt","w");
 
 	if (filePtr == NULL) {
 		printf("Could not open task-backup file for writing.");
@@ -62,7 +62,7 @@ void exportTasks() {
 // ^^admittedly this approach is a little weird. Newer tasks will appear higher on the list after a clear, but at least older tasks retain their number and position instead of everything getting moved up.
 void clearTasks() {
 	FILE *fileDonePtr;
-	fileDonePtr = fopen("task-done.txt","a");
+	fileDonePtr = fopen("./task-done.txt","a");
 
 	if (fileDonePtr == NULL) {
 		printf("Could not open task-done file for writing.");
@@ -119,7 +119,7 @@ void addTasks(int startPos) {
 	
 
 	char tempTask[MAXTASKLEN-2];
-	printf("Enter tasks, 80 char max, type done to stop\n");
+	printf("Enter tasks, type done to stop, max 80 characters per task ------------------ | \n");
 	int i = startPos;
 	char* doneStr = "done\n";
 	while (fgets (tempTask, MAXTASKLEN-2, stdin) != NULL) {
@@ -140,7 +140,7 @@ void addTasks(int startPos) {
 int importTasks() {
 	// Assumes only run at start when task list is empty
 	FILE *importFilePtr;
-	importFilePtr = fopen("task-backup.txt", "r");
+	importFilePtr = fopen("./task-backup.txt", "r");
 
 	if (importFilePtr == NULL) {
 		printf("No backup file.\n");
