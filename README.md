@@ -69,3 +69,14 @@ LLMs are cool and all, but this was a learning project started in 2023 before LL
 # Future Plans for gimmetask
 
 The biggest limitation of this for practical use is that it doesn't help you break tasks down into smaller sizes. You can already include +projectname or any other text tags of course, but one big project would overwhelm your list. It might make sense to add some depth value, but I'm wary of going too far. This is not a PM tool, and there's already a nice todo.txt CLI project. Another fun idea I had to extend this was some gamification as seen in the points.c file. Practically though, gimmetask is done. Lastly it might be useful to run gimmetask as a one shot command which would just need the last task number to be tracked between runs.
+
+# Building gimmetask
+
+This should be simple as it requires nothing beyond a C compiler.
+
+1. Have some C or C++ build tools installed for your OS
+2. Clone the repo
+3. Navigate to the repo
+4. Enter the command make
+
+At the time of writing, I have a pre-release version of gimmetask built for Windows. The latest I only have for GNU/Linux.
