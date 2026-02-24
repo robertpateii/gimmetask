@@ -53,6 +53,7 @@ dkms.conf
 
 # compiled program
 gimme
+gimmetask
 task-backup.txt
 task-done.txt
 

@@ -1,1 +1,1 @@
-gimme: gimme.o; gcc gimme.o -o gimme
+gimme: gimme.o; gcc gimme.o -o gimmetask

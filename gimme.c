@@ -150,7 +150,9 @@ int importTasks() {
 	importFilePtr = fopen("./task-backup.txt", "r");
 
 	if (importFilePtr == NULL) {
-		printf("No backup file.\n");
+		printf("No backup file found. Assuming this is your first time running gimmetask. Welcome!\n");
+		printf("This software is copyright 2023-2026 Robert W. Pate II; the data you enter is of course your own.\n");
+                printf("It is licensed GPL v3, and source code should be included. If not, it is available here:\nhttps://github.com/robertpateii/gimmetask\n");
 		return 1;
 	}
 
@@ -289,9 +291,8 @@ int main() {
 	if (importTasks()) {
 		addTasks(0);
                 exportTasks();
-        // TODO: if the user kills the program with ctrl+c here or enters no tasks, the exe stayed open unaccessible.
 	} else {
-		// do nothing, import success, if the user doesn't want to import, delete the backup file
+		// do nothing here as import was a success. If the user doesn't want to import, they can move the backup file
 	}
 	int length = countTasks();
 	printf("Max tasks: %d; Total tasks: %d\n", MAXTASKS, countTasks());
