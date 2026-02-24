@@ -1,3 +1,10 @@
+/* Copyright 2023-2026 Robert W. Pate II
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -119,7 +126,7 @@ void addTasks(int startPos) {
 	
 
 	char tempTask[MAXTASKLEN-2];
-	printf("Enter tasks, type done to stop, max 80 characters per task ------------------ | \n");
+	printf("Enter one task per line, max 80 chars per task, enter the word done when done adding.\n");
 	int i = startPos;
 	char* doneStr = "done\n";
 	while (fgets (tempTask, MAXTASKLEN-2, stdin) != NULL) {
@@ -172,14 +179,22 @@ int countTasks() {
 }
 
 int getTask(int taskCount) {
-	int randTask = rand() % taskCount;
+	int randTask = taskCount > 0 ? rand() % taskCount : -1;
 	int attempts = 0;
+        // Loop until we find a task that isn't the last one shown, a deleted one, or a completed one
 	while(lastRandTask == randTask || tasks[randTask][0] == deleted || tasks[randTask][0] == completed) {
-		randTask = rand() % taskCount;
+                randTask = taskCount > 0 ? rand() % taskCount : -1;
 		attempts++;
 		if (attempts > 20) {
-			printf("Error: Found 20 removed/done/current tasks in a row. Are any valid?\n");
+                    // Same as above but allow for the previous task being the only undone task
+                    if (lastRandTask >= 0 && tasks[lastRandTask][0] != deleted && tasks[lastRandTask][0] != completed) {
+                        printf("#%d: %s", lastRandTask+1, tasks[lastRandTask]);
+			printf("\nCongrats! Tried 20 times to find a fresh task, but could only find the previous.\nDid you finish everything else? Well done!\n");
+                        return lastRandTask;
+                    } else {
+			printf("... there is no next task!\nTried 20 times to find a fresh task, but they all were done or deleted.\nIt's time to (C)lear the list and celebrate, hurrah!\n");
 			return -1;
+                    }
 		}
 	}
 	printf("#%d: %s", randTask+1, tasks[randTask]);
@@ -259,18 +274,34 @@ void complete(int pos) {
 	tasks[pos][1] = ' ';
 }
 
+void reprintCurrentTask(int currTaskPos) {
+  if (currTaskPos >= 0) {
+      printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+  } else {
+    // we don't have a current task, do nothing, the command list will follow
+    // this can happen when the task list is empty or all complete and someone uses list or add
+    // getTask handles this already for next
+  }
+}
+
 int main() {
 	srand(time(0));// for getTask which should be randomish
 	if (importTasks()) {
 		addTasks(0);
-        // TODO: ran into issue if this happens and the user kills the program here or enters no tasks, the exe stayed open unaccessible.
+                exportTasks();
+        // TODO: if the user kills the program with ctrl+c here or enters no tasks, the exe stayed open unaccessible.
 	} else {
 		// do nothing, import success, if the user doesn't want to import, delete the backup file
 	}
 	int length = countTasks();
 	printf("Max tasks: %d; Total tasks: %d\n", MAXTASKS, countTasks());
-	printf("Next is ");
-	int currTaskPos = getTask(length); // also prints the task
+        int currTaskPos = -1;
+        if (length > 0) {
+          printf("Next is ");
+          currTaskPos = getTask(length); // also prints the task
+        } else {
+          printf("The task-backup.txt file was empty, add tasks here or into it directly.\n");
+        }
 	enum action nextAction;
 	while (nextAction = getNextAction()) { // 0 is exit
 		length = countTasks();
@@ -294,15 +325,15 @@ int main() {
 			break;
 		case 4: // add
 			addTasks(countTasks());
-			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+                        reprintCurrentTask(currTaskPos);
 			exportTasks();
 			break;
 		case 5: // list
 			printAllTasks();
-			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+                        reprintCurrentTask(currTaskPos);
 			break;
 		case 6: // retry
-			printf("Current #%d: %s", currTaskPos+1, tasks[currTaskPos]);
+                        reprintCurrentTask(currTaskPos);
 			break;
 		case 7: // get
 			currTaskPos = getSpecificTask();
