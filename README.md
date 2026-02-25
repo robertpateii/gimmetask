@@ -58,9 +58,61 @@ x pet cat
 - go to Camelot
 ```
 
-# Suggestion
+# Installation
 
-There's currently no support for telling gimmetask where you want it to save the task files, so you should just put gimme's executable wherever you want them saved. Fortunately, it's very small making it practical to have multiple copies in different folders (be they cloud or not) for multiple lists! Then you can add shortcuts to each one, such as gimmework, gimmehome, and gimmeidea.
+Key assumptions:
+
+1. The gimmetask executable is very small by today's standards: 18 kilobytes
+2. It will create and read files from the directory you are in when you run it
+
+**Windows in Windows:**
+
+1. Build it or get the latest Windows exe from github releases
+2. Make a folder for your list topic, such as hometasks or worktasks, perhaps in a cloud/synchronized folder
+3. Copy gimmetask.exe into that folder
+4. Right click on it and create a shortcut, setting the working directory to the one you created
+5. Move the shortcut wherever you like and/or pin to the start menu
+6. Repeat from step 2 as desired for different list topics
+
+**Terminals on any OS:**
+
+1. Build or get latest executable
+2. Make a folder for your list topic, such as hometasks or worktasks, perhaps in a cloud/synchronized folder
+3. Copy gimmetask into that folder
+4. Add a function to your shell config file to capture your current directory, switch to gimmetasks', run gimmetask, and switch back
+5. Repeat from step 2 as desired for different list topics
+
+example using fish shell, add to .config/fish/config.fish
+```
+  function gimme
+    set -f currentDir $PWD
+    cd ~/gdrive/gimmetaskhome
+    ./gimmetask
+    cd $currentDir
+  end
+```
+
+example using bash shell, add to your ~/.bashrc
+```
+gimme() {
+    local current_dir="$PWD"
+    cd "$HOME/gdrive/gimmetaskhome"
+    ./gimmetask
+    cd "$current_dir"
+}
+```
+
+**Dovetailing with Todo.txt**
+
+With the 2.0.0 release, the output files have been renamed to match todo.txt. The working list is now todo.txt and the cleared tasks are now appended to done.txt so you can use both interchangably on the same list.
+
+*Caveats with todo.txt*
+
+1. Gimmetask's removal adds a - before the task name which todo.txt will just think is part of an active todo
+    I don't think this needs to change, if you use todo.txt heavily, remove them there.
+
+2. Gimmetask does not add the completed date in front of the completed task on clearing the list (aka archiving)
+    I'd like to add this
 
 # On AI, LLM, and Agents
 
@@ -68,7 +120,7 @@ LLMs are cool and all, but this was a learning project started in 2023 before LL
 
 # Future Plans for gimmetask
 
-The biggest limitation of this for practical use is that it doesn't help you break tasks down into smaller sizes. You can already include +projectname or any other text tags of course, but one big project would overwhelm your list. It might make sense to add some depth value, but I'm wary of going too far. This is not a PM tool, and there's already a nice todo.txt CLI project. Another fun idea I had to extend this was some gamification as seen in the points.c file. Practically though, gimmetask is done. Lastly it might be useful to run gimmetask as a one shot command which would just need the last task number to be tracked between runs.
+The biggest limitation of this for practical use is that it doesn't help you break tasks down into smaller sizes. You can already include +projectname or any other text tags of course, but one big project would overwhelm your list. It might make sense to add some depth value, but I'm wary of going too far. This is not a PM tool, and there's already a nice todo.txt CLI project. Another fun idea I had to extend this was some gamification as seen in the points.c file. Practically though, gimmetask is done. Lastly it might be useful to run gimmetask as a one shot command which would just need the last task number to be tracked between runs, but again there's already a nice todo.txt CLI project which I use alongside gimmetask.
 
 # Building gimmetask
 

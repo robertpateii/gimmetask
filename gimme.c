@@ -47,10 +47,10 @@ void printAllTasks() {
 
 void exportTasks() {
         FILE *filePtr;
-        filePtr = fopen("./task-backup.txt","w");
+        filePtr = fopen("./todo.txt","w");
 
         if (filePtr == NULL) {
-                printf("Could not open task-backup file for writing.");
+                printf("Could not open todo.txt file for writing.");
                 return;
         }
 
@@ -69,10 +69,10 @@ void exportTasks() {
 // ^^admittedly this approach is a little weird. Newer tasks will appear higher on the list after a clear, but at least older tasks retain their number and position instead of everything getting moved up.
 void clearTasks() {
         FILE *fileDonePtr;
-        fileDonePtr = fopen("./task-done.txt","a");
+        fileDonePtr = fopen("./done.txt","a");
 
         if (fileDonePtr == NULL) {
-                printf("Could not open task-done file for writing.");
+                printf("Could not open done.txt file for writing.");
                 return;
         }
 
@@ -147,7 +147,7 @@ void addTasks(int startPos) {
 int importTasks() {
         // Assumes only run at start when task list is empty
         FILE *importFilePtr;
-        importFilePtr = fopen("./task-backup.txt", "r");
+        importFilePtr = fopen("./todo.txt", "r");
 
         if (importFilePtr == NULL) {
                 printf("No backup file found. Assuming this is your first time running gimmetask. Welcome!\n");
@@ -301,7 +301,7 @@ int main() {
                 printf("Next is ");
                 currTaskPos = getTask(length); // also prints the task
         } else {
-                printf("The task-backup.txt file was empty, add tasks here or into it directly.\n");
+                printf("The todo.txt file was empty, add tasks here or into it directly.\n");
         }
         enum action nextAction;
         while (nextAction = getNextAction()) { // 0 is exit
